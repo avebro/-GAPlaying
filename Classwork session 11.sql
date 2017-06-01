@@ -26,7 +26,7 @@ FROM counties c
 INNER JOIN 
 	(
 	SELECT county 
-		, SUM(liter_size * bottle_qty) as "totalML" 
+		, SUM(pack * liter_size * bottle_qty) as "totalML" 
 	FROM sales
 	WHERE county is not NULL
 	GROUP BY county
