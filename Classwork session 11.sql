@@ -34,6 +34,27 @@ INNER JOIN
 ON c.county = T1.county
 ORDER BY "PerCapitaML" DESC
 
--- What percentage of sales per county are over $100? What are the top five counties?	
+-- What percentage of sales per county are over $100? What are the top five counties?
+
+SELECT 
+	County
+-- 	, Count(county)
+    , CASE 
+    	WHEN total > 100 THEN 'HIGH'
+     	ELSE 'LOW'
+     END as salecategory
+FROM sales
+GROUP BY County, sales.total
+
+
+SELECT 
+	County
+	, Count(county)
+FROM sales
+WHERE total > 100
+GROUP BY County
+
+
+
 -- What were the top five categories of liquor sold (based on number of sales) in the five most populous counties?
 
