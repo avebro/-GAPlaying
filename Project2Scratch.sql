@@ -83,13 +83,58 @@ ON s.user_id = e.user_id
 WHERE e.user_id is NULL 
 
 -- Bookmarks
--- How many users are creating bookmarks
--- How  many bookmarks are they creating
--- Bookmark interaction - 9,10,11
+-- How many users are creating bookmarks? 988
+SELECT COUNT(DISTINCT(user_id)) as "UsersWhoCreatedBookmark"
+FROM events
+WHERE event_code in (9) and data1 = 'New Bookmark Added'
+
+-- How  many bookmarks are they creating? 2076
+SELECT COUNT(user_id)
+FROM events
+WHERE event_code in (9) and data1 = 'New Bookmark Added'
+
+-- Bookmarks created per user who creates bookmarks -- 2076/988 = 2.1
+
+-- Bookmark interaction - (event codes 9,10,11) - 65,020 bookmark interactions
+SELECT COUNT(user_id) as "BookmarkInteraction"
+FROM events
+WHERE event_code in (9, 10, 11) 
+
+-- Number of users who interacted with Bookmarks - (event codes 9,10,11) - 6,871 users interacted with bookmarks
+SELECT COUNT(DISTINCT(user_id)) as "BookmarkInteraction"
+FROM events
+WHERE event_code in (9, 10, 11) 
+
+-- Number of bookmark interactions per user who uses bookmarks - 65020/6871 = 9.46 rounds to 10 
 
 -- Tabs
 -- Average number of tabs open at any given time. 
+SELECT user_id
+-- 	, (CAST(data1 as numeric) * CAST(data2 as numeric)) as "TotalTabs"
+	, data1
+    , data2
+    , fx_version
+FROM events e
+JOIN users u
+ON u.id = e.user_id
+WHERE event_code in (26) and data2 in ('0 tabs', '1 tabs') and data1 not in ('0 windows','1 windows')
+LIMIT 100
+
+-- michael's code
+Select distinct Cast(replace(data1, ' windows', '') as numeric) as windows, cast(replace(data2, ' tabs', '') as numeric) as tabs 
+	, count(*)  as counter
+-- 	, windows as diff
+from events
+where event_code = '26' 
+group by windows, tabs
+Order by tabs asc, windows asc
+
 -- Average number of tabs open upon restore. (20) - Throw out 0s due to no restore
+SELECT *
+FROM events
+WHERE 
+
+
 -- Average number of tabs per user based on most recent session
 
 
