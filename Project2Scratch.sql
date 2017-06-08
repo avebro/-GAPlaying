@@ -394,3 +394,74 @@ ORDER BY max DESC
 SELECT *
 FROM survey 
 Where user_id = 10589
+
+
+-- Tabs affect on Crashes
+
+SELECT CAST(REPLACE(data2,'Tabs ','') as numeric) as TabCount
+	, Count(user_id) as crashcount
+FROM events
+WHERE event_code = 20 and data1 != 'Windows 0' and data2 != 'Tabs 0'
+GROUP BY data2
+Order BY crashcount DESC
+
+-- Average Tab Use for New Users - 6
+
+
+SELECT AVG(cast(replace(data2, ' tabs', '') as numeric))
+FROM events e
+INNER JOIN 
+	(
+    SELECT user_id
+        , q1
+        ,CASE 
+            WHEN q1 in ('0','1', '2') THEN '1 New_User' 
+            WHEN q1 in ('3','4') THEN '2 User'
+            WHEN q1 in ('5','6') THEN '3 Old_User'
+        	ELSE 'N/A'
+         END as UserExperience
+/**         , q7
+         ,CASE 
+            WHEN q7 in ('0','1') THEN '1 Low_Usage' 
+            WHEN q7 in ('2','3','4') THEN '2 Moderate_Usage'
+            ELSE '3 High_Usage'
+         END as UsageRate **/
+    FROM survey) a 
+ON e.user_id = a.user_id
+WHERE a.UserExperience = '1 New_User' and event_code = 26
+-- GROUP BY a.UserExperience
+-- ORDER BY a.UserExperience 
+
+
+
+-- Average Bookmark use Use for New Users - 8
+
+
+SELECT (SUM(CASE
+    	WHEN e.event_code = 10 THEN 1
+        ELSE 0
+      END)/(Count(DISTINCT(e.user_id) ))) as AvgBookmark
+FROM events e
+INNER JOIN 
+	(
+    SELECT user_id
+        , q1
+        ,CASE 
+            WHEN q1 in ('0','1', '2') THEN '1 New_User' 
+            WHEN q1 in ('3','4') THEN '2 User'
+            WHEN q1 in ('5','6') THEN '3 Old_User'
+        	ELSE 'N/A'
+         END as UserExperience
+/**         , q7
+         ,CASE 
+            WHEN q7 in ('0','1') THEN '1 Low_Usage' 
+            WHEN q7 in ('2','3','4') THEN '2 Moderate_Usage'
+            ELSE '3 High_Usage'
+         END as UsageRate **/
+    FROM survey) a 
+ON e.user_id = a.user_id
+WHERE a.UserExperience = '1 New_User' and event_code = 10
+-- GROUP BY a.UserExperience
+-- ORDER BY a.UserExperience 
+
+
