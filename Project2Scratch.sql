@@ -293,6 +293,7 @@ ORDER BY percentile ASC
 
 -- what do newer people use more?
 
+-- Categorizing users 
 
 SELECT user_id
 	, q1
@@ -336,15 +337,27 @@ ORDER BY a.UserExperience
 		, a.UsageRate 
 
 
--- Above table with Tab and Bookmark usage layered in
+-- Above table with average Bookmark and tab usage layered in
 
 SELECT a.UserExperience
 	, a.UsageRate
- 	, Count(DISTINCT(e.user_id) )
+ 	, Count(DISTINCT(e.user_id) ) as NumUsers
     ,SUM(CASE
     	WHEN e.event_code = 10 THEN 1
         ELSE 0
       END) as BookmarkUse
+    ,(SUM(CASE
+    	WHEN e.event_code = 10 THEN 1
+        ELSE 0
+      END)/(Count(DISTINCT(e.user_id) ))) as AvgBookmark
+   ,AVG(CASE
+     	WHEN e.event_code = 26 THEN cast(replace(data2, ' tabs', '') as numeric)
+        ELSE 0 
+      END) as AvgTabUse
+    ,MAX(CASE
+    	WHEN e.event_code = 26 THEN cast(replace(data2, ' tabs', '') as numeric)
+       	ELSE 0 
+    END) as MaxTabUse
 FROM events e
 INNER JOIN 
 	(
@@ -366,3 +379,18 @@ ON e.user_id = a.user_id
 GROUP BY a.UserExperience, a.UsageRate
 ORDER BY a.UserExperience 
 		, a.UsageRate 
+
+
+-- Valdiation Check to make sure above query makes sense (max is user id 10589)
+SElECT MAX(cast(replace(data2, ' tabs', '') as numeric))
+	, user_id
+FROM events
+WHERE event_code = 26
+Group BY user_id
+ORDER BY max DESC
+
+-- Validation Check to make sure above query makes sense (user id is not in survey)
+
+SELECT *
+FROM survey 
+Where user_id = 10589
