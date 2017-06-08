@@ -10,14 +10,14 @@ Select
    
 FROM users
 
-# Unique OS 
+-- Unique OS 
 SELECT 
 	DISTINCT os 
 FROM users
 ORDER BY os
 
 
--- users who did not take the survey
+-- users who did not take the survey - 2,3186
 
 SELECT 
 	Count(u.id) as "users who did not take survey"
@@ -91,17 +91,36 @@ SELECT
 --    AVG(CAST(REPLACE(data1, ' total bookmarks','') as numeric)) as NumberOfBookmarks
 FROM events
 WHERE event_code in (8) 
--- GROUP BY user_id
 ORDER BY NumberOfBookmarks DESC
 
+-- What fraction of users launched at least one bookmakr during the sample week? 6534/14718 (from other queries) 44.39% of users whose events were recorded launched a bookmark
 
-
+SELECT COUNT(DISTINCT(user_id)) as "UsersWhoCreatedBookmark"
+FROM events
+WHERE event_code in (10) 
 
 
 -- How many users are creating bookmarks? 988
 SELECT COUNT(DISTINCT(user_id)) as "UsersWhoCreatedBookmark"
 FROM events
 WHERE event_code in (9) and data1 = 'New Bookmark Added'
+
+-- What fraction of users created new bookmarks? 988/ 14718(from other query) 6.71% of users whose events were recorded launched a bookmark
+
+-- What's the distribution of how often bookmarks are used?
+SELECT *
+ 	, to_timestamp(timestamp)
+FROM events e
+LIMIT 100
+
+
+SELECT *
+FROM survey
+LIMIT 100
+
+
+-- How does number of bookmarks correlate with how long the user has been using Firefox?
+
 
 -- How  many bookmarks are they creating? 2076
 SELECT COUNT(user_id)
@@ -151,6 +170,86 @@ WHERE
 
 
 -- Average number of tabs per user based on most recent session
+
+-- Max number of tabs by user? 
+-- absolute max? 1103
+
+SELECT user_id
+	, MAX(cast(replace(data2, ' tabs', '') as numeric)) as "tabs"
+FROM events
+where event_code = '26'
+GROUP BY user_id
+ORDER BY tabs DESC
+
+-- Max tabs by percentile 
+
+SELECT user_id
+      , tabs
+      , ntile(4) OVER(ORDER BY tabs) as percentile 
+FROM
+      ( SELECT user_id
+             , MAX(cast(replace(data2, ' tabs', '') as numeric)) as "tabs"
+        FROM events
+        WHERE event_code = '26'
+        GROUP BY user_id
+        ORDER BY tabs DESC) a
+                                
+-- Average number of max bookmarks by quartile 
+-- Average number of max bookmarks for the middle 50% of users recorded.   3rd quartile (43.894 ~ 44 tabs) 2nd quartile (21.003 ~ 21) 
+SELECT AVG(bookmarks)
+    , percentile
+FROM 
+	(Select user_id
+      , bookmarks
+      , ntile(4) OVER(ORDER BY bookmarks) as percentile 
+	FROM
+      ( SELECT user_id
+             , MAX(cast(replace(data1, ' total bookmarks', '') as numeric)) as "bookmarks"
+        FROM events
+        WHERE event_code = '8'
+        GROUP BY user_id
+        ORDER BY bookmarks DESC) a) a
+-- WHERE a.percentile in (2,3)
+GROUP BY percentile 
+
+
+-- Average number of max tabs by quartile 
+-- Average number of max tabs for the middle 50% of users recorded.   3rd quartile (4.967 ~ 5 tabs) 2nd quartile (2.922 ~ 3) 
+SELECT AVG(tabs)
+    , percentile
+FROM 
+	(Select user_id
+      , tabs
+      , ntile(4) OVER(ORDER BY tabs) as percentile 
+	FROM
+      ( SELECT user_id
+             , MAX(cast(replace(data2, ' tabs', '') as numeric)) as "tabs"
+        FROM events
+        WHERE event_code = '26'
+        GROUP BY user_id
+        ORDER BY tabs DESC) a) a
+-- WHERE a.percentile in (2,3)
+GROUP BY percentile 
+
+
+-- Average bookmark uses by quartile
+
+SELECT AVG(bookmarkuses)
+    , percentile
+FROM 
+	(Select user_id
+      , bookmarkuses
+      , ntile(4) OVER(ORDER BY bookmarkuses) as percentile 
+	FROM
+      ( SELECT user_id
+            , Count(user_id) as "bookmarkuses"
+        FROM events
+        WHERE event_code = '10'
+        GROUP BY user_id
+        ORDER BY bookmarkuses DESC) a) a
+GROUP BY percentile 
+ORDER BY percentile DESC
+
 
 
 
