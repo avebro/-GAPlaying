@@ -83,6 +83,21 @@ ON s.user_id = e.user_id
 WHERE e.user_id is NULL 
 
 -- Bookmarks
+-- Median number of bookmarks? 28 
+-- Average number of bookmarks? 106.7
+
+SELECT 
+ 	MEDIAN(CAST(REPLACE(data1, ' total bookmarks','') as numeric)) as NumberOfBookmarks
+--    AVG(CAST(REPLACE(data1, ' total bookmarks','') as numeric)) as NumberOfBookmarks
+FROM events
+WHERE event_code in (8) 
+-- GROUP BY user_id
+ORDER BY NumberOfBookmarks DESC
+
+
+
+
+
 -- How many users are creating bookmarks? 988
 SELECT COUNT(DISTINCT(user_id)) as "UsersWhoCreatedBookmark"
 FROM events
@@ -136,6 +151,8 @@ WHERE
 
 
 -- Average number of tabs per user based on most recent session
+
+
 
 
 
