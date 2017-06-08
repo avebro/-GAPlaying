@@ -248,10 +248,121 @@ FROM
         GROUP BY user_id
         ORDER BY bookmarkuses DESC) a) a
 GROUP BY percentile 
+ORDER BY percentile ASC
+
+-- Average bookmark uses by 10 percentiles
+
+SELECT AVG(bookmarkuses)
+    , percentile
+FROM 
+	(Select user_id
+      , bookmarkuses
+      , ntile(10) OVER(ORDER BY bookmarkuses) as percentile 
+	FROM
+      ( SELECT user_id
+            , Count(user_id) as "bookmarkuses"
+        FROM events
+        WHERE event_code = '10'
+        GROUP BY user_id
+        ORDER BY bookmarkuses DESC) a) a
+GROUP BY percentile 
 ORDER BY percentile DESC
 
 
+-- Average tabs uses by 10 percentiles
+
+SELECT AVG(tabs)
+    , percentile
+    , Count(user_id)
+FROM 
+	(Select user_id
+      , tabs
+      , ntile(10) OVER(ORDER BY tabs) as percentile 
+	FROM
+      ( SELECT user_id
+             , MAX(cast(replace(data2, ' tabs', '') as numeric)) as "tabs"
+        FROM events
+        WHERE event_code = '26'
+        GROUP BY user_id
+        ORDER BY tabs DESC) a) a
+-- WHERE a.percentile in (2,3)
+GROUP BY percentile 
+ORDER BY percentile ASC
 
 
 
+-- what do newer people use more?
 
+
+SELECT user_id
+	, q1
+    ,CASE 
+    	WHEN q1 in ('0','1', '2') THEN 'New_User' 
+        WHEN q1 in ('3','4') THEN 'User'
+        ELSE 'Old_User'
+     END as "UserAge"
+     , q7
+     ,CASE 
+    	WHEN q7 in ('0','1') THEN 'Low_Usage' 
+        WHEN q7 in ('2','3','4') THEN 'Moderate_Usage'
+        ELSE 'High_usage'
+     END as "UsageRate"
+FROM survey
+
+
+-- Type of usage user are by user experience
+
+SELECT a.UserExperience
+	, a.UsageRate
+ 	, Count(a.UsageRate)  
+From
+	(
+    SELECT user_id
+        , q1
+        ,CASE 
+            WHEN q1 in ('0','1', '2') THEN '1 New_User' 
+            WHEN q1 in ('3','4') THEN '2 User'
+            ELSE '3 Old_User'
+         END as UserExperience
+         , q7
+         ,CASE 
+            WHEN q7 in ('0','1') THEN '1 Low_Usage' 
+            WHEN q7 in ('2','3','4') THEN '2 Moderate_Usage'
+            ELSE '3 High_Usage'
+         END as UsageRate
+    FROM survey) a 
+GROUP BY a.UserExperience, a.UsageRate
+ORDER BY a.UserExperience 
+		, a.UsageRate 
+
+
+-- Above table with Tab and Bookmark usage layered in
+
+SELECT a.UserExperience
+	, a.UsageRate
+ 	, Count(DISTINCT(e.user_id) )
+    ,SUM(CASE
+    	WHEN e.event_code = 10 THEN 1
+        ELSE 0
+      END) as BookmarkUse
+FROM events e
+INNER JOIN 
+	(
+    SELECT user_id
+        , q1
+        ,CASE 
+            WHEN q1 in ('0','1', '2') THEN '1 New_User' 
+            WHEN q1 in ('3','4') THEN '2 User'
+            ELSE '3 Old_User'
+         END as UserExperience
+         , q7
+         ,CASE 
+            WHEN q7 in ('0','1') THEN '1 Low_Usage' 
+            WHEN q7 in ('2','3','4') THEN '2 Moderate_Usage'
+            ELSE '3 High_Usage'
+         END as UsageRate
+    FROM survey) a 
+ON e.user_id = a.user_id
+GROUP BY a.UserExperience, a.UsageRate
+ORDER BY a.UserExperience 
+		, a.UsageRate 
