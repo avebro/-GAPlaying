@@ -464,4 +464,80 @@ WHERE a.UserExperience = '1 New_User' and event_code = 10
 -- GROUP BY a.UserExperience
 -- ORDER BY a.UserExperience 
 
+-- average folder depth for new users
+
+SELECT (SUM(CASE
+    	WHEN e.event_code = 8 THEN CAST(REPLACE(data3, 'folder depth ','') as numeric)
+        ELSE 0
+      END)/(Count(DISTINCT(e.user_id) ))) as AvgBookmarkFolderDepth
+      , a.UserExperience
+FROM events e
+INNER JOIN 
+	(
+    SELECT user_id
+        , q1
+        ,CASE 
+            WHEN q1 in ('0','1', '2') THEN '1 New_User' 
+            WHEN q1 in ('3','4') THEN '2 User'
+            WHEN q1 in ('5','6') THEN '3 Old_User'
+        	ELSE 'N/A'
+         END as UserExperience
+/**         , q7
+         ,CASE 
+            WHEN q7 in ('0','1') THEN '1 Low_Usage' 
+            WHEN q7 in ('2','3','4') THEN '2 Moderate_Usage'
+            ELSE '3 High_Usage'
+         END as UsageRate **/
+    FROM survey) a 
+ON e.user_id = a.user_id
+WHERE /**a.UserExperience = '1 New_User' and **/event_code = 8
+GROUP BY a.UserExperience
+
+
+
+
+-- events population stats
+
+SELECT 
+	Count(DISTINCT(user_id) ) as NumUsers
+    ,SUM(CASE
+    	WHEN event_code = 10 THEN 1
+        ELSE 0
+      END) as BookmarkUse
+    ,(SUM(CASE
+    	WHEN event_code = 10 THEN 1
+        ELSE 0
+      END)/(Count(DISTINCT(user_id) ))) as AvgBookmark
+   ,AVG(CASE
+     	WHEN event_code = 26 THEN cast(replace(data2, ' tabs', '') as numeric)
+        ELSE 0 
+      END) as AvgTabUse
+    ,MAX(CASE
+    	WHEN event_code = 26 THEN cast(replace(data2, ' tabs', '') as numeric)
+       	ELSE 0 
+    END) as MaxTabUse
+FROM events 
+-- e
+/** INNER JOIN 
+	(
+    SELECT user_id
+        , q1
+        ,CASE 
+            WHEN q1 in ('0','1', '2') THEN '1 New_User' 
+            WHEN q1 in ('3','4') THEN '2 User'
+            ELSE '3 Old_User'
+         END as UserExperience
+         , q7
+         ,CASE 
+            WHEN q7 in ('0','1') THEN '1 Low_Usage' 
+            WHEN q7 in ('2','3','4') THEN '2 Moderate_Usage'
+            ELSE '3 High_Usage'
+         END as UsageRate
+    FROM survey) a 
+-- ON e.user_id = a.user_id
+-- GROUP BY a.UserExperience, a.UsageRate
+-- ORDER BY a.UserExperience 
+		, a.UsageRate 
+**/
+
 
