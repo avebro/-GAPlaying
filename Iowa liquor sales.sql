@@ -1,4 +1,6 @@
-SELECT county, proof 
+#test iowa
+
+SELECT county, proof
 FROM products, counties
 WHERE proof > 100
 Group by county, proof
